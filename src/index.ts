@@ -20,11 +20,32 @@ export type Token = {
 
 export class SelasClient {
   supabase: SupabaseClient;
-  token: string | undefined;
+  app_id: string;
+  key: string;
+  secret: string;
 
-  constructor(supabase: SupabaseClient) {
+  constructor(supabase: SupabaseClient, app_id: string, key: string, secret: string) {
     this.supabase = supabase;
+    this.app_id = app_id;
+    this.key = key;
+    this.secret = secret;
   }
+
+
+  /**
+   * Call a rpc function on the selas server with app_id, key and secret.
+   * 
+   * @param fn 
+   * @param params 
+   * @returns data from the rpc function or an error.
+   */
+  rpc = async (fn: string, params: any) => {
+    const paramsWithSecret = { ...params, p_secret: this.secret, p_app_id: this.app_id, p_key: this.key };
+    const { data, error } = await this.supabase.rpc(fn, paramsWithSecret);
+
+  return { data, error };
+  };
+
 
   /**
    * Add customer to the database. After creation, the customer will have 0 credits ;
@@ -194,13 +215,12 @@ export class SelasClient {
  * ```
  *
  */
-export const createSelasClient = async (credentials: { email: string; password: string }) => {
+export const createSelasClient = async (credentials: { app_id: string, key: string, secret: string }) => {
   const SUPABASE_URL = "https://rmsiaqinsugszccqhnpj.supabase.co";
   const SUPABASE_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtc2lhcWluc3Vnc3pjY3FobnBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NjMxNDk1OTksImV4cCI6MTk3ODcyNTU5OX0.wp5GBiK4k4xQUJk_kdkW9a_mOt8C8x08pPgeTQErb9E";
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } });
-  supabase.auth.signInWithPassword(credentials);
 
-  return new SelasClient(supabase);
+  return new SelasClient(supabase, credentials.app_id, credentials.key, credentials.secret);
 };
