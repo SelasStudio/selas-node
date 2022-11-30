@@ -7,6 +7,17 @@ export type Customer = {
   credits: number;
 };
 
+export type Token = {
+  id?: string;
+  key: string;
+  created_at?: string;
+  user_id: string;
+  ttl: number;
+  quota: number;
+  customer_id: string;
+  description?: string;
+};
+
 export class SelasClient {
   supabase: SupabaseClient;
   token: string | undefined;
@@ -58,12 +69,14 @@ export class SelasClient {
    *
    */
   getCustomerCredits = async (id: string) => {
-    const { data } = await this.supabase.from("customers").select("*").eq("external_id", id);
+    const { data, error } = await this.supabase.from("customers").select("*").eq("external_id", id);
 
-    if (data) {
-      return { data: data[0].credits as number };
+    if (error) {
+      return { error: `An error occured.` };
+    } else if (data!.length == 0) {
+      return { error: `Customer ${id} unknown.` };
     } else {
-      return { error: `Customer ${id} unknown` };
+      return { data: data![0].credits as number };
     }
   };
 
@@ -110,7 +123,7 @@ export class SelasClient {
    * ```
    *
    */
-  async changeCredits(args: { delta: number, id: string }) {
+  async changeCredits(args: { delta: number; id: string }) {
     const { data, error } = await this.supabase.rpc("provide_credits_to_customer", {
       p_external_id: args.id,
       p_nb_credits: args.id,
@@ -125,37 +138,62 @@ export class SelasClient {
     }
   }
 
-  async createToken(external_id: string, quota: number = 1, ttl: number = 60, description: string = "") {
+  /**
+   * Create a token for a customer. The customer must have been created with the createCustomer method, and have at least 1 credit.
+   * The token can be used to access the API from the Client of @selas/selas-js package.
+   *
+   * @param args.id - the id of the customer who will use the token
+   * @param args.quota - the maximum number of credits the customer can spend using the token. It will not be
+   * possible to use the token if the customer has less credits than the quota.
+   * @param args.ttl - the time to live of the token in seconds. After this time, the token will be invalid.
+   * @param args.description - a description of the token. It will be used to identify the token in the dashboard.
+   * @returns the token containing a key attribute if successful or an error message
+   *
+   * @example
+   * Create a token for a customer.
+   * ```ts
+   * const {data: credits} = await selas.getCustomerCredits("leopold");
+   * console.log(`The token key is ${token.key}.`); // The token key is $a6IvYd6h12@.
+   * ```
+   *
+   */
+  async createToken(args: { id: string; quota: number; ttl: number; description?: string }) {
     const { data, error } = await this.supabase.rpc("create_token", {
-      target_external_id: external_id,
-      target_quota: quota,
-      target_ttl: ttl,
-      target_description: description,
+      target_external_id: args.id,
+      target_quota: args.quota,
+      target_ttl: args.ttl,
+      target_description: args.description,
     });
 
     if (error) {
-      return { error: error.message };
+      return { error: `Customer ${args.id} unknown` };
     } else {
       // @ts-ignore
       const token = data as Token;
 
       return {
         data: token,
-        message: `Token created for customer ${external_id} with quota ${quota} and scope customer.`,
       };
     }
   }
 }
 
-// type generateImageParams = {
-//   prompt: string;
-//   format: "landscape" | "portrait" | "square";
-//   n_images: 1 | 4;
-//   quality: "minimal" | "normal" | "high";
-//   export_format: "png" | "jpg" | "webp" | "avif";
-//   censor_nsfw: boolean;
-// }
-
+/**
+ * Create a selas client. The client can be used to access the API using the credentials created
+ * on https://selas.ai. The client can be used to manage users, tokens and credits. Be careful, the client
+ * is not secure and should not be used in a browser.
+ *
+ * @param credentials - the credentials of the client (email and password). You can create them on https://selas.ai
+ *
+ * @returns a SelasClient object.
+ *
+ * @example
+ * Create a token for a customer.
+ * ```ts
+ * const selas = await createCLient({email: "leopold@selas.studio", password: "password"});
+ * ```
+ *
+ */
 export const createSelasClient = async (credentials: { email: string; password: string }) => {
   const SUPABASE_URL = "https://rmsiaqinsugszccqhnpj.supabase.co";
   const SUPABASE_KEY =

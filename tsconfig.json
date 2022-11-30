@@ -15,12 +15,15 @@
     "noUnusedParameters": true,
     "strict": true,
     "useUnknownInCatchVariables": true,
-    "baseUrl": "./",
+    "baseUrl": "./src",
     "resolveJsonModule": true,
     "removeComments": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "experimentalDecorators": false
-  }
+  },
+  "files": [
+    "src/index.ts"
+  ]
 }
