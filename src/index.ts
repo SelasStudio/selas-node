@@ -112,9 +112,9 @@ export class SelasClient {
    *
    */
     deactivateAppUser = async (args: { app_user_id: string }) => {
-        const { data, error } = await this.rpc("app_owner_get_token", { p_app_user_id: args.app_user_id });
-        await this.rpc("app_owner_revoke_user_token", { p_app_user_id: args.app_user_id, p_token: data });
-        return { data, error };
+        var token = await this.rpc("app_owner_get_token", { p_app_user_id: args.app_user_id });
+        var deleted = await this.rpc("app_owner_revoke_user_token", { p_app_user_id: args.app_user_id, p_token: token.data });
+        return deleted;
     }
 
     postJob = async (args: {app_user_id: string, app_user_token: string,service_id: string, job_config: string,worker_filter: string}) => {
