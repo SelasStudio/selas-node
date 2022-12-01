@@ -111,9 +111,9 @@ export class SelasClient {
    * ```
    *
    */
-    deactivateCustomer = async (args: { app_user_id: string }) => {
+    deactivateAppUser = async (args: { app_user_id: string }) => {
         const { data, error } = await this.rpc("app_owner_get_token", { p_app_user_id: args.app_user_id });
-        await this.rpc("app_owner_revoke_user_token", { p_token: data });
+        await this.rpc("app_owner_revoke_user_token", { p_app_user_id: args.app_user_id, p_token: data });
         return { data, error };
     }
 
