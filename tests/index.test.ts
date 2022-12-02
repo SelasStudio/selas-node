@@ -27,13 +27,15 @@ describe("testing index file", () => {
 
         expect(credit_result_2.data).toBe(10);
 
-        await selas.postJob({
+        console.log(await selas.postJob({
             app_user_id: v_app_user_id,
             app_user_token: v_app_user_token,
             service_id: '04cdf9c4-5338-4e32-9e63-e15b2150d7f9',
             job_config: '{"steps":100,"width":512,"height":512,"prompt":"cute cat","sampler":"k_lms","translate":false,"batch_size":1,"skip_steps":12,"nsfw_filter":false,"image_format":"png","guidance_scale":7.5}',
             worker_filter: '{"name":"^a.*","branch":"dev"}'
-        });
+        }));
+
+
 
         const result_deactivation = await selas.deactivateAppUser({ app_user_id: v_app_user_id });
 
