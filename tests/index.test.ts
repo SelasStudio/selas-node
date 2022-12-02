@@ -9,21 +9,21 @@ describe("testing index file", () => {
             secret: "xBfuyKuTrtvK73y1"
         });
 
-        var result_user = await selas.createAppUser();
+        const result_user = await selas.createAppUser();
 
-        var v_app_user_id = String(result_user.data);
+        const v_app_user_id = String(result_user.data);
 
-        var result_token = await selas.createToken({ app_user_id: v_app_user_id });
+        const result_token = await selas.createToken({ app_user_id: v_app_user_id });
 
-        var v_app_user_token = String(result_token.data);
+        const v_app_user_token = String(result_token.data);
 
-        var credit_result_1 = await selas.getAppUserCredits({ app_user_id: v_app_user_id });
+        const credit_result_1 = await selas.getAppUserCredits({ app_user_id: v_app_user_id });
 
         expect(credit_result_1.data).toBe(0);
 
         await selas.addCredit({ app_user_id: v_app_user_id, amount: 10 });
 
-        var credit_result_2 = await selas.getAppUserCredits({ app_user_id: v_app_user_id });
+        const credit_result_2 = await selas.getAppUserCredits({ app_user_id: v_app_user_id });
 
         expect(credit_result_2.data).toBe(10);
 
@@ -35,7 +35,7 @@ describe("testing index file", () => {
             worker_filter: '{"name":"^a.*","branch":"dev"}'
         });
 
-        var result_deactivation = await selas.deactivateAppUser({ app_user_id: v_app_user_id });
+        const result_deactivation = await selas.deactivateAppUser({ app_user_id: v_app_user_id });
 
         expect(result_deactivation.data).toBe(true);
 
