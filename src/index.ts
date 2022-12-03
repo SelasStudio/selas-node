@@ -18,18 +18,28 @@ export type Token = {
   description?: string;
 };
 
+export type WorkerFilter = {
+    id?: string;
+    name?: string;
+    branch?: string;
+    is_dirty?: boolean;
+    cluster?: number;
+}
+
 export class SelasClient {
   supabase: SupabaseClient;
   app_id: string;
   key: string;
   secret: string;
+  worker_filter: WorkerFilter;
 
-  constructor(supabase: SupabaseClient, app_id: string, key: string, secret: string) {
-    this.supabase = supabase;
-    this.app_id = app_id;
-    this.key = key;
-    this.secret = secret;
-  }
+    constructor(supabase: SupabaseClient, app_id: string, key: string, secret: string, worker_filter?: WorkerFilter) {
+        this.supabase = supabase;
+        this.app_id = app_id;
+        this.key = key;
+        this.secret = secret;
+        this.worker_filter = worker_filter || { branch: "prod" };
+    }
 
   /**
    * Call a rpc function on the selas server with app_id, key and secret.
@@ -47,7 +57,25 @@ export class SelasClient {
 
   echo = async () => {
     return await this.rpc("echo", { say: "Hi" });
-  };
+    };
+
+    getAppSuperUser = async () => {
+        const { data, error } = await this.rpc("app_owner_get_super_user", {});
+        if (!error) {
+            return { data: String(data), error };
+        } else {
+            return { data, error };
+        }
+    };
+
+    getAppUserToken = async (args: { app_user_id: string }) => {
+        const { data, error } = await this.rpc("app_owner_get_user_token_value", { p_app_user_id: args.app_user_id });
+        if (!error) {
+            return { data: String(data), error };
+        } else {
+            return { data, error };
+        }
+    };
 
   /**
    * Add customer to the database. After creation, the customer will have 0 credits ;
@@ -117,22 +145,30 @@ export class SelasClient {
   };
 
   postJob = async (args: {
-    app_user_id: string;
-    app_user_token: string;
     service_id: string;
     job_config: string;
-    worker_filter: string;
   }) => {
-    const { data, error } = await this.supabase.rpc("post_job", {
-      p_app_id: this.app_id,
-      p_app_key: this.key,
-      p_app_user_id: args.app_user_id,
-      p_app_user_token: args.app_user_token,
-      p_service_id: args.service_id,
-      p_job_config: args.job_config,
-      p_worker_filter: args.worker_filter,
-    });
-    return { data, error };
+      let v_app_super_user = await this.getAppSuperUser();
+      if (!v_app_super_user.error) {
+          let v_app_user_token = await this.getAppUserToken({ app_user_id: v_app_super_user.data });
+          if (!v_app_super_user.error) {
+              const { data, error } = await this.supabase.rpc("post_job", {
+                  p_app_id: this.app_id,
+                  p_app_key: this.key,
+
+                  p_app_user_id: v_app_super_user.data,
+                  p_app_user_token: v_app_user_token.data,
+
+                  p_service_id: args.service_id,
+                  p_job_config: args.job_config,
+                  p_worker_filter: this.worker_filter,
+              });
+              return { data, error };
+          }
+          return v_app_user_token;
+      }
+      return v_app_super_user;
+      
   };
 
   /**
