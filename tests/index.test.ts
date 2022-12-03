@@ -8,6 +8,8 @@ describe("testing index file", () => {
             key: "@8Obb--r%VyOHfR-",
             secret: "xBfuyKuTrtvK73y1"
         });
+
+        const response = await selas.postJob({
     });
 
     test("creation of user ", async () => {
