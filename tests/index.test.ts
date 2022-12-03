@@ -2,6 +2,14 @@ import { createSelasClient } from "../src/index";
 
 describe("testing index file", () => {
 
+    test("postStableDiffusionJob", async () => {
+        const selas = await createSelasClient({
+            app_id: "55d5030b-bb9b-4065-9659-cfde4ecbb4a9",
+            key: "@8Obb--r%VyOHfR-",
+            secret: "xBfuyKuTrtvK73y1"
+        });
+    });
+
     test("creation of user ", async () => {
         const selas = await createSelasClient({
             app_id: "9b731fea-e0e2-499c-879c-1a30a7f33546",
